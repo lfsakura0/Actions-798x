@@ -23,7 +23,7 @@ rm -rf feeds/luci/applications/luci-app-mosdns
 rm -rf feeds/luci/applications/luci-app-openclash
 rm -rf feeds/luci/applications/luci-app-passwall
 rm -rf feeds/luci/applications/luci-app-alist
-rm -rf feeds/luci/applications/luci-app-netdata
+#rm -rf feeds/luci/applications/luci-app-netdata
 rm -rf feeds/luci/applications/luci-app-smartdns
 # rm -rf feeds/luci/themes/luci-theme-design
 
@@ -43,10 +43,10 @@ git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall package/luci-a
 git clone --depth=1 https://github.com/vernesong/OpenClash package/luci-app-openclash
 
 # 系统监控
-git clone --depth=1 https://github.com/muink/luci-app-netdata package/luci-app-netdata
+#git clone --depth=1 https://github.com/muink/luci-app-netdata package/luci-app-netdata
 
 # 网络测速/测试
-git clone https://github.com/sirpdboy/netspeedtest.git package/netspeedtest
+#git clone https://github.com/sirpdboy/netspeedtest.git package/netspeedtest
 
 # 5G模块驱动和插件
 #git clone https://github.com/4IceG/luci-app-3ginfo-lite.git package/luci-app-3ginfo-lite
