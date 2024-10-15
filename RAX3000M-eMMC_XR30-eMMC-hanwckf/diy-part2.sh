@@ -47,7 +47,7 @@ git clone --depth=1 https://github.com/vernesong/OpenClash package/luci-app-open
 
 # 网络测速/测试
 #git clone https://github.com/sirpdboy/netspeedtest.git package/netspeedtest
-git clone https://github.com/muink/luci-app-netspeedtest package/luci-app-netspeedtest
+#git clone https://github.com/muink/luci-app-netspeedtest package/luci-app-netspeedtest
 # 5G模块驱动和插件
 #git clone https://github.com/4IceG/luci-app-3ginfo-lite.git package/luci-app-3ginfo-lite
 git clone https://github.com/4IceG/luci-app-modemband package/luci-app-modemband
