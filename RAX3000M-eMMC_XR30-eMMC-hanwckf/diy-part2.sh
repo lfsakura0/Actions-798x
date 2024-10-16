@@ -28,6 +28,19 @@ rm -rf feeds/luci/applications/luci-app-smartdns
 # rm -rf feeds/luci/themes/luci-theme-design
 
 ##添加额外插件/内容
+# 5G模块驱动和插件
+#git clone https://github.com/4IceG/luci-app-3ginfo-lite.git package/luci-app-3ginfo-lite
+git clone https://github.com/4IceG/luci-app-modemband package/luci-app-modemband
+#svn co https://github.com/kiddin9/kwrt-packages/trunk/luci-app-3ginfo-lite package/luci-app-3ginfo-lite
+#svn co https://github.com/kiddin9/kwrt-packages/trunk/luci-app-modem package/luci-app-modem
+
+
+
+
+
+
+
+
 #主题
 # git clone --depth=1 -b js https://github.com/kenzok78/luci-theme-design.git  package/luci-theme-design
 git clone --depth=1 https://github.com/derisamedia/luci-theme-alpha package/luci-theme-alpha
@@ -48,9 +61,7 @@ git clone --depth=1 https://github.com/vernesong/OpenClash package/luci-app-open
 # 网络测速/测试
 #git clone https://github.com/sirpdboy/netspeedtest.git package/netspeedtest
 #git clone https://github.com/muink/luci-app-netspeedtest package/luci-app-netspeedtest
-# 5G模块驱动和插件
-#git clone https://github.com/4IceG/luci-app-3ginfo-lite.git package/luci-app-3ginfo-lite
-git clone https://github.com/4IceG/luci-app-modemband package/luci-app-modemband
+
 
 # SmartDNS
 git clone --depth=1 -b master https://github.com/pymumu/luci-app-smartdns package/luci-app-smartdns
