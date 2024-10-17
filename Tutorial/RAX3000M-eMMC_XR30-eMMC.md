@@ -1,6 +1,15 @@
 最新教程下载链接：  
 https://github.com/lgs2007m/Actions-OpenWrt/releases/tag/Router-Flashing-Files  
 
+目录  
+0.开SSH  
+1.备份原厂分区  
+2.刷uboot  
+3.刷gpt分区表  
+4.uboot刷固件、格式化data分区和切换固件  
+5.刷回原厂  
+6.串口TTL救砖  
+
 mt798x的fip分区实际上包含bl31+uboot，为了方便理解，这里的教程将fip直接称为uboot。  
 
 本教程使用基于hanwckf大佬bl-mt798x仓库uboot-202206源码修改编译的bl2、uboot和gpt，不支持DHCP。  
@@ -15,7 +24,7 @@ NAND普通版：盒子背部和机子背部标签是“CH”字样，生产日�
 eMMC算力版：盒子背部和机子背部标签是“CH EC”字样，生产日期20230626、20230703、20231226基本都是，或者透过散热孔看PCB右上角印丝结尾是P1。  
 
 新出的CMCC XR30和RAX3000M配置相同，也分区两个版本，eMMC版包装盒正面印的信息是RAX3000Z增强版，机子正面有全屋组网的标志，背面和顶上有贴纸，底部标签有算力版标识。NAND普通版盒子正面印的是CMCC XR30，机子正面没有全屋组网的标志，背面，顶上都没有贴纸，底部的标签也大一圈，标签上没有算力版的标识。虽然它俩具体型号相同，但是增强版才是eMMC的，CMCC XR30目前看是NAND的。  
-RAX3000M算力版有三个LED灯，RAX3000Z增强版只有两个。它们的刷机文件互刷也没有问题，只不过LED可能不对。   
+RAX3000M算力版有三个LED灯，RAX3000Z增强版只有两个。它们的刷机文件互刷也没有问题，只不过LED可能不对。  
 
 如果不确定NAND还是eMMC版本，建议解锁SSH后用命令查看分区，看哪个命令输出分区就是哪个版本：  
 ```
@@ -180,9 +189,13 @@ c876dddc7b989edc402abd434891a966  /dev/mmcblk0p3
 ```
 到这里uboot已经刷好了，可以断电重启，进uboot刷我提供的ImmortalWrt固件，然后接着刷gpt分区表。  
 
-注：如果是从带有一个config分区的ImmortalWrt单分区分区表刷uboot，这里验证fip分区的md5是不一样的。  
-因为ImmortalWrt的单分区的把原厂2M的fip扩大到了4M，我这个分区表还是保持fip为2M。  
-下面再刷我的gpt分区表，fip分区会变为2M，再验证分区的md5就会和我的一样了。  
+注：如果是从ImmortalWrt天灵单分区分区表或OpenWrt、ImmortalWrt主线分区表刷uboot，这里验证fip分区的md5是不一样的。  
+因为他们的分区表把原厂2M的fip分区扩大到了4M，我这个分区表还是保持fip为2M。  
+可以临时用下面命令验证fip分区数据的md5，和上面一样即可：  
+```
+dd if=$(blkid -t PARTLABEL=fip -o device) bs=512 count=4096 | md5sum 
+```
+后面再刷我的gpt分区表，fip分区会变为2M，重启新的分区表生效后，再验证分区的md5就会和我的一样了。  
 
 天灵和大雕的刷机命令是直接使用偏移量，因为fip分区偏移量不变，所以不用管设备号。  
 我上面刷uboot的命令自动找fip分区所在设备号，也不用你管设备号，可以直接用。  
@@ -260,19 +273,18 @@ dd写入没有报错，sgdisk最后输出successfully即可。如果分区表明
 检查第7分区data大小接近整个eMMC大小，比如64G eMMC，data分区有56GB左右。  
 
 建议此时备份下载修改后的分区表，以后有问题进不了系统，可以直接uboot刷这个分区表。  
-当然刷no-last-partition的分区表后再新建分区也行，一样的。  
+当然重刷分区表后再新建分区也行，一样的。  
 ```
 dd if=/dev/mmcblk0 bs=512 count=34 of=/tmp/mmcblk0_GPT_sgdisk.bin
 ```
 都没有问题可以断电，按reset上电进uboot刷固件了。  
 
 ##【刷分区表的一点小提示】##  
-不建议用diskman磁盘管理修改分区，可能会导致系统不能启动。建议用fdisk、gdisk之类的进行修改分区。  
+不建议用diskman磁盘管理修改分区，可能会导致系统不能启动。建议用fdisk、gdisk之类的工具修改分区。  
 如果不慎修改后系统不能启动，可以进入uboot，浏览器输入 http://192.168.1.1/gpt.html 重新刷正常的gpt分区表即可。  
 
-如果uboot或系统中更换了其他分区表，但不需要使用前面的sgdisk命令新建分区并保存分区表。  
-这样则建议在系统中使用fdisk或者sgdisk（一般需要先安装）单独保存下分区表，这样在diskman那里显示才正确：  
-例如系统中单独写gpt分区表：  
+如果在uboot或系统中更换了其他分区表，但又不需要新建分区，这种情况建议在系统中使用fdisk或者sgdisk（一般需要先安装）单独保存下分区表，这样在diskman那里显示才正确：  
+例如系统中更换gpt分区表：  
 ```
 dd if=/tmp/gpt.bin of=/dev/mmcblk0 bs=512 count=34 conv=fsync
 ```
@@ -297,7 +309,7 @@ mt798x eMMC机子的bl2在boot0硬件分区，不受userdata硬件分区的gpt�
 这样的分区表只包含前面的小分区，扇区总数也不会超过4G，所以适用所有大于4G的eMMC。  
 刷好我改分区表后，使用sgdisk用未分配空间新建一个分区，并还原分区的type code和UUID，这样分区和原厂分区是完全一样的。  
 
-- ### 4.uboot刷固件和格式化data分区
+- ### 4.uboot刷固件、格式化data分区和切换固件
 我改的这个uboot不支持DHCP，电脑需要设置ip 192.168.1.2/24，连接网线到路由器lan口，路由上电按reset，等待灯变为蓝色，说明uboot webui已启动，可以松开按钮，浏览器打开192.168.1.1，上传固件刷写成功后绿灯会亮3秒，然后重启。注意：其他大佬的uboot可能指示灯不一样。  
 我改的这个uboot是2024.10.10编译的：  
 RAX3000M算力版：U-Boot 2022.07-rc3 (Oct 10 2024 - 14:22:45 +0800)  
@@ -320,12 +332,31 @@ uboot刷好第三方OP系统后，SSH登录用命令格式化下最后一个data
 ```
 mkfs.ext4 $(blkid -t PARTLABEL=data -o device)
 ```
-需要把data分区挂载给docker，则在系统->挂载点菜单，添加挂载点，UUID选择mmcblk0p7，输入自定义挂载位置/opt，回车，然后保存，再在外层点保存并应用，最后重启系统即可。  
+需要把data分区挂载给docker，则在系统->挂载点菜单，添加挂载点，UUID选择最大那个分区，我的分区表最大分区对应的是mmcblk0p7，输入自定义挂载位置/opt，回车，然后保存，再在外层点保存并应用，最后重启系统即可。  
 最后检查系统->挂载点菜单，已挂载的文件系统中，挂载点/overlay对应的文件系统：  
-刷写master固件后，/overlay对应的文件系统为/dev/fitrw  
-刷写23.05固件后，/overlay对应的文件系统为/dev/mmcblk0p66  
-刷写21.02固件后，/overlay对应的文件系统为/dev/loop0  
+刷写master开源固件后，/overlay对应的文件系统为/dev/fitrw  
+刷写23.05开源固件后，/overlay对应的文件系统为/dev/mmcblk0p66  
+刷写闭源固件后，/overlay对应的文件系统为/dev/loop0  
 如果没有重新在备份与升级菜单升级下固件，直至有。  
+
+直接uboot刷闭源固件(.bin格式Legacy image)或者openwrt、immortalwrt主线master/23.05分支固件(.itb格式FIT image)，可以直接启动。  
+【注意】openwrt、immortalwrt主线master/23.05分支固件(.itb格式FIT image)固件第一次启动有点慢，特别是集成docker的固件，第一次启动可能需要5分钟，耐心等待，后面再启动就快了。  
+
+uboot刷机是不保留配置的，如果已经刷好两种固件不想重刷，可以在系统里修改环境变量，重启即可切换启动的固件，配置保留。  
+当前在openwrt、immortalwrt主线master/23.05分支固件(.itb格式FIT image)，要切换到闭源固件(.bin格式Legacy image)  
+运行下面命令修改环境变量，没有报错即可，然后reboot重启
+```
+cp /etc/fw_env.config /etc/fw_env.config.bak
+echo -e "/dev/mmcblk0p1 0 0x80000" > /etc/fw_env.config
+fw_setenv dual_boot.current_slot 0
+cp /etc/fw_env.config.bak /etc/fw_env.config
+```
+
+当前在闭源固件(.bin格式Legacy image)，要切换到openwrt、immortalwrt主线master/23.05分支固件(.itb格式FIT image)  
+运行下面命令修改环境变量，没有报错即可，然后reboot重启  
+```
+fw_setenv dual_boot.current_slot 1
+```
 
 - ### 5.刷回原厂
 输入下面命令不报错即可：  
@@ -374,7 +405,7 @@ dd if=/dev/zero of=$(blkid -t PARTLABEL=rootfs_data -o device) conv=fsync
 等待mmcblk0p8 rootfs_data分区刷完，刷完断电重启即可。  
 
 - ### 6.串口TTL救砖
-注意：mtk_uartboot文件夹下的bl2、fip只用于救砖，不要用于正常机子。  
+注意：mtk_uartboot文件夹下的bl2、fip只用于救砖，不要刷入正常机子。  
 路由器断电，使用USB转TTL（建议使用3.3V电平的，推荐使用FT232RL）连接路由器串口TTL接口。  
 运行串口TTL救砖文件夹下的“打开设备管理器命令.bat”，在打开的设备管理器中查看USB转TTL设备对应的COM口号。  
 关闭可能占用该COM口的程序，运行“MT798X串口TTL救砖命令.bat”，输入该COM口号，选择正常波特率，然后选择对应机型的fip序号。  
